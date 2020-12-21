@@ -3,27 +3,28 @@
 
 #?(:cljs (def dev? ^boolean goog.DEBUG))
 
-(defn pseudo? [[rule value]]
-  (and (re-matches #"&:.*" (name rule))
-       (map? value)))
 
 (defn nested? [[rule value]]
-  (and (string? rule)
+  (and (or (keyword? rule) (vector? rule))
        (map? value)))
 
 (defn literal? [x]
   (or (string? x) (number? x)))
+
+(defn media? [[rule _]]
+  (= rule :cljss.core/media))
 
 (defn escape-val [rule val]
   (if (= rule :content)
     (pr-str val)
     val))
 
-(defn build-css [cls styles]
+(defn build-css [cls media styles]
   (->> styles
        (map (fn [[rule val]] (str (name rule) ":" (escape-val rule val) ";")))
        (cstr/join "")
-       (#(str "." cls "{" % "}"))))
+       (#(str cls "{" % "}"))
+       (#(if media (str media "{" % "}") %))))
 
 (defn compile-css-rule [[rule val]]
   (let [r [(str (name rule) ":")]

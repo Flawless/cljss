@@ -1,31 +1,12 @@
 (ns cljss.core-test
-  (:require [clojure.test :refer :all]
-            [cljss.core :refer :all]
-            [cljss.rum :refer :all]
-            [cljss.builder :refer :all]
+  (:require [cljss.collect :as collect]
             [cljss.font-face :as ff]
-            [cljss.inject-global :as ig]))
+            [cljss.inject-global :as ig]
+            [clojure.test :refer :all]))
 
-(deftest test-styles-builder
-  (testing "static"
-    (is (= (build-styles "cls" {:color "#fff"})
-           ["cls" [".cls{color:#fff;}"] []])))
-
-  (testing "pseudos"
-    (is (= (build-styles "cls" {:&:hover {:color "red"}})
-           ["cls" [".cls{}" ".cls:hover{color:red;}"] []])))
-
-  (testing "string selector"
-    (is (= (build-styles "cls" {"a" {:color "blue"}})
-           ["cls" [".cls{}" ".cls a{color:blue;}"] []])))
-
-  (testing "dynamic"
-    (is (= (build-styles "cls" {:color 'x})
-           '["cls" [".cls{color:var(--var-cls-0);}"] [["--var-cls-0" x]]])))
-
-  (testing "dynamic pseudos"
-    (is (= (build-styles "cls" {:&:hover {:color 'x}})
-           '["cls" [".cls{}" ".cls:hover{color:var(--var-cls-0);}"] [["--var-cls-0" x]]]))))
+(defn reset-env-fixture [f]
+        (collect/reset-env!)
+  (f))
 
 (deftest test-font-face
   (testing "build @font-face"
