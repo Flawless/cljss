@@ -1,49 +1,55 @@
 (ns cljss.builder
-  (:require [cljss.media :refer [build-media]]
-            [cljss.collect :as c]
+  (:require [cljss.collect :as c]
+            [cljss.media :as media]
             [cljss.utils :as utils]))
 
 (defn status? [[rule value]]
   (and (re-matches #"^.*\?$" (name rule))
        (map? value)))
 
+(defn build-name [cls rule]
+  (cond
+    (vector? rule) (str cls)
+    (keyword? rule) (let [rule (name rule)]
+                      (cond
+                        (re-matches #"[a-z].*" rule) (str cls " " rule)
+                        (re-matches #"&:.*" rule) (str cls (subs rule 1))
+                        :else (str cls rule)))))
+
+(defn- build-styles-recursive [cls media styles]
+  "Recursively translates map `styles` into vector of vectors, `cls` must be a
+   on input takes string with css selector and map with styles, styles may be
+   nested
+   Returns vector contains processed styles and vals"
+  (let [nested          (filterv utils/nested? styles)
+        styles          (filterv #(and (not (utils/nested? %))) styles)
+        nstyles         (->> nested
+                             (mapv
+                              (fn [[rule styles]]
+                                (build-styles-recursive (build-name cls rule)
+                                                        (if (vector? rule)
+                                                          (media/-compile-media-query rule))
+                                                        styles))))
+        [static vals]   (c/collect-styles styles)
+        static          (utils/build-css cls media static)
+        vals            (into [] vals)
+        vals            (into vals (mapcat second nstyles))
+        static          (concat [static] (mapcat first nstyles))]
+    [static vals]))
+
 (defn build-styles [cls styles]
-  (c/reset-env! {:cls cls})
-  (let [pseudo  (filterv utils/pseudo? styles)
-        nested  (->> styles
-                     (filterv (comp not utils/pseudo?))
-                     (filterv utils/nested?))
-        [mstatic mvals] (some-> styles :cljss.core/media build-media)
-        styles  (dissoc styles :cljss.core/media)
-        styles  (filterv #(and (not (utils/pseudo? %)) (not (utils/nested? %))) styles)
-        [static vals] (c/collect-styles cls styles)
-        pstyles (->> pseudo
-                     (reduce
-                       (fn [coll [rule styles]]
-                         (conj coll (c/collect-styles (str cls (subs (name rule) 1)) styles)))
-                       []))
-        nstyles (->> nested
-                     (reduce
-                       (fn [coll [rule styles]]
-                         (conj coll (c/collect-styles (str cls " " rule) styles)))
-                       []))
-        vals    (->> pstyles
-                     (mapcat second)
-                     (into vals)
-                     (concat mvals)
-                     (into []))
-        vals (->> nstyles
-                  (mapcat second)
-                  (into vals))
-        static (into [static] (map first pstyles))
-        static (into static (map first nstyles))
-        static (if mstatic
-                 (conj static mstatic)
-                 static)]
-    [cls static vals]))
+  (concat [cls] (build-styles-recursive (str \. cls) nil styles)))
 
 (comment
   (build-styles
-    "hello"
-    {"&:first-child" {:color "red"}
-     "a" {:color "blue"}}))
+   "hello"
+   {"&:first-child" {:color "red"}
+    "a" {:color "blue"
+         :cljss.core/media {[:screen :and [:max-width "850px"]]
+                            {:color "yellow"}}}})
+  (build-styles
+   "hello"
+   {"&:first-child" {:color "red"}
+    "div" {:color "blue"
+           "a" {:color "green"}}
+    "h1" {:color "#321"}}))

@@ -1,3 +1,9 @@
 {:deps {org.clojure/clojure       {:mvn/version "1.9.0"}
         org.clojure/clojurescript {:mvn/version "1.10.339"}
-        sablono                   {:mvn/version "0.8.1"}}}
+        sablono                   {:mvn/version "0.8.1"}}
+ :aliases {:env/dev {:extra-paths ["test/clj"]}
+           :test {:extra-paths ["test/clj"]
+                  :extra-deps {com.cognitect/test-runner
+                               {:git/url "https://github.com/cognitect-labs/test-runner"
+                                :sha "76568540e7f40268ad2b646110f237a60295fa3c"}}
+                  :main-opts ["-m" "cognitect.test-runner"]}}}
