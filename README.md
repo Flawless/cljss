@@ -2,19 +2,7 @@
 
 <img src="logo.png" width="155" height="68" alt="cljss logo" />
 
-[CSS-in-JS](https://speakerdeck.com/vjeux/react-css-in-js) for ClojureScript
-
-[![Clojars](https://img.shields.io/clojars/v/clj-commons/cljss.svg)](https://clojars.org/clj-commons/cljss)
-[![cljdoc badge](https://cljdoc.org/badge/clj-commons/cljss)](https://cljdoc.org/d/clj-commons/cljss/CURRENT)
-[![CircleCI](https://circleci.com/gh/clj-commons/cljss.svg?style=svg)](https://circleci.com/gh/clj-commons/cljss)
-
-Ask questions on #cljss chat at [Clojuarians Slack](http://clojurians.net/)
-
-<a href="https://www.patreon.com/bePatron?c=1239559">
-  <img src="https://c5.patreon.com/external/logo/become_a_patron_button.png" height="40px" />
-</a>
-
-`[clj-commons/cljss "1.6.4"]`
+This is a fork for [CSS-in-JS](https://speakerdeck.com/vjeux/react-css-in-js) for ClojureScript
 
 ## Table of Contents
 
@@ -128,7 +116,7 @@ CSS pseudo classes can be expressed as a keyword using parent selector syntax `&
   {:font-size "14px"
    :background-color blue
    :&:hover {:background-color light-blue}
-   "&:nth-child(3)" {:color "blue"}})
+   :&:nth-child(3) {:color "blue"}})
 ```
 
 ### Nested selectors
@@ -138,11 +126,13 @@ Sometimes when you want to override library styles you may want to refer to DOM 
 ```clojure
 (defstyles error-form []
   {:border "1px solid red"
-   ".material-ui--input" {:color "red"}})
+   :.material-ui--input {:color "red"}})
 
 [:form {:class (error-form)} ;; .css-817253 {border: 1px solid red}
  (mui/Input)] ;; .css-817253 .material-ui--input {color: red}
 ```
+
+
 
 ### `:css` attribute
 
@@ -219,9 +209,8 @@ The syntax is specified as of [CSS Media Queries Level 4 spec](https://www.w3.or
 (require [cljss.core :as css])
 
 (defstyles header [height]
-  {:height     height
-   ::css/media {[:only :screen :and [:max-width "460px"]]
-                {:height (/ height 2)}}})
+  {:height height
+   [:only :screen :and [:max-width "460px"]] {:height (/ height 2)}})
 ```
 
 - Supported media types: `#{:all :print :screen :speech}`
